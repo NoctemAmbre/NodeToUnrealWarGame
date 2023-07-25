@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Autentification au serveur NodeJS permettant de jouer contre Mathieu</title>
+    <style type="text/css">
+      #title {
+        font-size: x-large;
+      }
+      input[type="text"] {
+        background-color: #fbf7ee;
+        border: 1px solid #422b1e;
+        color: #422b1e;
+        height: 30px;
+        padding: 0rem 0.25rem;
+      }
+      #logged_msg {
+        font-size: 1.05rem;
+        font-style: italic;
+        margin-bottom: 0.5rem;
+      }
+      #wrapper_actions {
+        padding: 0.5rem 0;
+      }
+      #wrapper_content {
+        display: none;
+        margin-bottom: 2rem;
+      }
+      #carte {
+        position: relative;
+        display: inline-block;
+      }
+      #map_canvas {
+        position: absolute;
+      }
+      #map {
+        display: inherit;
+      }
+      #weapon_list {
+        align-items: center;
+        background-color: rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        justify-content: space-evenly;
+        position: absolute;
+        width: 70px;
+      }
+      .weapon {
+        background: none;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: contain;
+        cursor: pointer;
+        border: 0;
+        filter: drop-shadow(0 0 0.1rem rgba(255, 255, 255, 0.25));
+        height: 50px;
+        margin: 0;
+        opacity: 1;
+        padding: 0;
+        position: absolute;
+        width: 50px;
+      }
+      .weapon:disabled {
+      }
+      .weapon[data-in-use="true"] {
+        cursor: not-allowed;
+      }
+      .tourelle {
+        background-image: url("public/old_turret_50px.png");
+        height: 36px;
+        width: 36px;
+      }
+      .artillerie {
+        background-image: url("public/old_artillery_50px.png");
+      }
+      .avion_artilleur {
+        background-image: url("public/old_plane_50px.png");
+      }
+      .username {
+        bottom: -1rem;
+        display: block;
+        font-weight: bold;
+        position: absolute;
+        text-align: center;
+        width: 100%;
+      }
+      .btn_group {
+        display: none;
+        gap: 0.5rem;
+      }
+      #btn_attack,
+      #connexion,
+      #btn_quitWeapon,
+      #btn_sendMessage {
+        background-color: #fdecc8;
+        border: 1px solid #422b1e;
+        cursor: pointer;
+        color: #422b1e;
+        /* display: none; */
+        font-size: 1rem;
+        padding: 0.25rem 1rem;
+        height: 30px;
+        padding: 0rem 1rem;
+      }
+      #btn_attack:disabled,
+      #connexion:disabled,
+      #btn_quitWeapon:disabled,
+      #btn_sendMessage:disabled {
+        background-color: #fdfaf3;
+        border: 1px solid #d9d0c0;
+        cursor: not-allowed;
+        color: #d9d0c0;
+        /* display: none; */
+        font-size: 1rem;
+        padding: 0.25rem 1rem;
+      }
+      #btn_attack:hover:not(:disabled),
+      #btn_quitWeapon:hover:not(:disabled),
+      #connexion:hover:not(:disabled),
+      #btn_sendMessage:hover:not(:disabled) {
+        background-color: #422b1e;
+        border: 1px solid #422b1e;
+        color: #fdecc8;
+      }
+      #player {
+        background-image: url("./public/pion.png");
+        display: none;
+        height: 18px;
+        left: 0;
+        position: absolute;
+        top: 0;
+        width: 18px;
+      }
+      #liste_user {
+        padding: 0 0 0 2rem;
+        width: 200px;
+      }
+      #liste_user > div,
+      #chatbox > div:not(.btn_group) {
+        align-items: center;
+        background-color: #422b1e;
+        color: #fdecc8;
+        display: flex;
+        height: 30px;
+        justify-content: center;
+        width: 100%;
+      }
+      #liste_user ul {
+        /* background-color: #fdecc8; */
+        border: 1px solid #422b1e;
+        box-sizing: border-box;
+        height: calc(100% - 30px);
+        list-style: none;
+        margin: 0;
+        padding: 0.5rem;
+        width: 100%;
+      }
+      #liste_user ul li {
+        list-style: none;
+        padding: 0.05rem 0;
+      }
+      #liste_user ul li.hasWeapon {
+        color: #641d18;
+      }
+      #chatbox {
+        /* border: 1px solid #422b1e;
+              box-sizing: border-box;
+              height: 300px;
+              list-style: none;
+              margin: 2rem 0 0.5rem;
+              padding: 0.5rem;
+              width: 100%; */
+      }
+      #chatbox ul {
+        border: 1px solid #422b1e;
+        box-sizing: border-box;
+        height: 300px;
+        list-style: none;
+        margin: 0 0 0.5rem;
+        padding: 0.5rem;
+        width: 100%;
+      }
+      #chatbox ul li span {
+        padding: 0.25rem 0;
+      }
+      #chatbox b {
+        color: #422b1e;
+      }
+      #chatbox .process_msg {
+        color: #645248;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- <h2>Bienvenu sur la carte d'état major du</h2>
+    <p></p> -->
+    <p style="text-align: center" id="title">
+      Bienvenu sur la carte d'état major du <br />
+      <span>
+        <i><b>M</b></i
+        >aterial <i><b>A</b></i
+        >dministration <i><b>T</b></i
+        >erritory <i><b>H</b></i
+        >istorical <i><b>I</b></i
+        >ndividual <i><b>E</b></i
+        >uropean <i><b>U</b></i
+        >niversity</span
+      >
+    </p>
+    <p>Votre bûte, si vous l'acceptez, est de deviner la position de Mathieu sur la carte et de tenter de l'atteindre par tout les moyens à votre dispositon. <br />Vous avez a votre disposition :</p>
+    <ul>
+      <li>Un avions éclaireur : Celui-ci se déplacera en ligne droite sur la carte. Si l'avions passe juste au dessus de Mathieu et que celui-ci est en mouvement alors sa position sera indiqué sur le carte durant quelque seconde.</li>
+      <li>Canon longue porté : Très implécis il a cependant l'avantage d'atteindre une large zone et de faire beaucoup de dégas.</li>
+      <li>Tourelle mitrayeuse : Faiblement efficace mais pouvant tirer en longues rafalles en ligne droit</li>
+    </ul>
+    <p>Vous choisissez votre role par un clic sur l'icone correspondante. Une fois faite vous ne pouvez plus en changer</p>
+
+    <div id="wrapper_actions">
+      <div id="logged_msg">Connecte-toi, jeune recrue !</div>
+
+      <div id="autentification">
+        <label for="pseudo">Pseudo :</label>
+        <input id="pseudo" type="text" />
+        <input id="connexion" value="connexion" type="button" />
+        <span class="error" style="color: red"></span>
+      </div>
+
+      <div class="btn_group">
+        <button id="btn_quitWeapon" disabled="disabled">Quitter l'armement</button>
+        <button id="btn_attack" disabled="disabled">Attaquer</button>
+      </div>
+    </div>
+
+    <div id="wrapper_content">
+      <div id="carte">
+        <canvas id="map_canvas" width="0" height="0"></canvas>
+        <div id="player"></div>
+        <div>
+          <button class="weapon avion_artilleur" data-type="3" data-unit="0"><span class="username"></span></button>
+          <button class="weapon tourelle" data-type="2" data-unit="0"><span class="username"></span></button>
+          <button class="weapon tourelle" data-type="2" data-unit="1"><span class="username"></span></button>
+          <button class="weapon tourelle" data-type="2" data-unit="2"><span class="username"></span></button>
+          <button class="weapon artillerie" data-type="1" data-unit="0"><span class="username"></span></button>
+          <button class="weapon tourelle" data-type="2" data-unit="3"><span class="username"></span></button>
+          <button class="weapon tourelle" data-type="2" data-unit="4"><span class="username"></span></button>
+          <button class="weapon tourelle" data-type="2" data-unit="5"><span class="username"></span></button>
+          <button class="weapon avion_artilleur" data-type="3" data-unit="1"><span class="username"></span></button>
+        </div>
+        <div>
+          <img id="map" src="public/map_finale.png" alt="rien" />
+        </div>
+      </div>
+
+      <div id="liste_user">
+        <div>Liste des joueurs</div>
+        <ul></ul>
+      </div>
+    </div>
+
+    <div id="chatbox">
+      <div>Chatbox</div>
+      <ul></ul>
+      <div class="btn_group">
+        <input type="text" name="sendMessage" id="ipt_sendMessage" placeholder="Rapport soldat..." />
+        <button id="btn_sendMessage">Envoyer</button>
+      </div>
+    </div>
+
+    <!-- CREATION SOCKET -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <!-- Init Javascript files -->
+    <script type="text/javascript" src="./public/start.js"></script>
+  </body>
+</html>

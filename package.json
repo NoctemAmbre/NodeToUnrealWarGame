@@ -1,0 +1,19 @@
+{
+  "name": "verdun",
+  "version": "1.0.0",
+  "description": "Ceci est le programme source pour le site web en lien avec l'application UE verdun",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:start": "nodemon index.js"
+  },
+  "author": "Noctem",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
